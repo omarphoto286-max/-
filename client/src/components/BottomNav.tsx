@@ -12,6 +12,7 @@ import {
   Info,
   Settings,
   Dumbbell,
+  Sparkles,
 } from "lucide-react";
 
 export function BottomNav() {
@@ -19,43 +20,88 @@ export function BottomNav() {
   const [location, setLocation] = useLocation();
 
   const navItems = [
-    { title: t("dashboard"), url: "/", icon: LayoutDashboard, testId: "nav-dashboard" },
-    { title: t("worship"), url: "/worship", icon: Flame, testId: "nav-worship" },
-    { title: t("study"), url: "/study", icon: GraduationCap, testId: "nav-study" },
-    { title: t("tasks"), url: "/tasks", icon: CheckSquare, testId: "nav-tasks" },
-    { title: t("reading"), url: "/reading", icon: BookOpen, testId: "nav-reading" },
-    { title: t("statistics"), url: "/statistics", icon: BarChart3, testId: "nav-statistics" },
-    { title: t("achievements"), url: "/achievements", icon: Trophy, testId: "nav-achievements" },
-    { title: t("motivation"), url: "/motivation", icon: Lightbulb, testId: "nav-motivation" },
+    { title: t("dashboard"), url: "/", icon: LayoutDashboard },
+    { title: t("worship"), url: "/worship", icon: Flame },
+    { title: t("study"), url: "/study", icon: GraduationCap },
+    { title: t("tasks"), url: "/tasks", icon: CheckSquare },
+    { title: t("reading"), url: "/reading", icon: BookOpen },
+    { title: t("statistics"), url: "/statistics", icon: BarChart3 },
+    { title: t("achievements"), url: "/achievements", icon: Trophy },
+    { title: t("motivation"), url: "/motivation", icon: Lightbulb },
 
-    // ⭐ New Gym Page
-    { title: t("gym") || "Gym", url: "/gym", icon: Dumbbell, testId: "nav-gym" },
+    // التطوير
+    { title: "التطوير", url: "/self-improvement", icon: Sparkles },
 
-    { title: t("about"), url: "/about", icon: Info, testId: "nav-about" },
-    { title: t("settings"), url: "/settings", icon: Settings, testId: "nav-settings" },
+    // Gym
+    { title: t("gym") || "Gym", url: "/gym", icon: Dumbbell },
+
+    { title: t("about"), url: "/about", icon: Info },
+    { title: t("settings"), url: "/settings", icon: Settings },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg">
+    <nav
+      className="
+        fixed bottom-3 left-1/2 -translate-x-1/2 z-50
+        w-[92%] max-w-[500px]
+        bg-white/10 backdrop-blur-xl
+        border border-white/20 shadow-2xl
+        rounded-3xl
+        px-4 py-2
+      "
+      style={{
+        direction: dir,
+      }}
+    >
       <div
-        className={`${
-          dir === "rtl" ? "flex-row-reverse" : "flex-row"
-        } flex items-center gap-4 px-3 py-2 no-scrollbar overflow-x-auto md:overflow-x-visible md:justify-between md:w-full`}
-        style={{ direction: dir === "rtl" ? "rtl" : "ltr", WebkitOverflowScrolling: "touch" }}
+        className={`
+          flex items-center gap-4 overflow-x-auto no-scrollbar
+          ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}
+        `}
       >
         {navItems.map((item) => {
           const isActive = location === item.url;
+
           return (
             <button
               key={item.url}
               onClick={() => setLocation(item.url)}
-              data-testid={item.testId}
-              className={`flex flex-col items-center justify-center min-w-[70px] px-2 py-1.5 rounded-lg transition-all hover-elevate ${
-                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-              }`}
+              className={`
+                flex flex-col items-center justify-center
+                min-w-[64px]
+                px-2 py-1.5
+                transition-all duration-300
+                active:scale-95
+                rounded-xl relative
+                ${
+                  isActive
+                    ? "text-white"
+                    : "text-white/70 hover:text-white"
+                }
+              `}
             >
-              <item.icon className={`h-5 w-5 mb-0.5 ${isActive ? "scale-110" : ""}`} />
-              <span className="text-[10px] font-medium text-center leading-tight">{item.title}</span>
+              {/* Glow behind active icon */}
+              {isActive && (
+                <div className="absolute inset-0 rounded-xl bg-white/20 blur-lg -z-10 animate-pulse"></div>
+              )}
+
+              {/* Icon */}
+              <item.icon
+                className={`
+                  h-6 w-6 mb-1 transition-all duration-300
+                  ${isActive ? "scale-125 drop-shadow-lg" : "opacity-80"}
+                `}
+              />
+
+              {/* Label */}
+              <span
+                className={`
+                  text-[11px] font-medium transition-opacity duration-300
+                  ${isActive ? "opacity-100" : "opacity-70"}
+                `}
+              >
+                {item.title}
+              </span>
             </button>
           );
         })}
