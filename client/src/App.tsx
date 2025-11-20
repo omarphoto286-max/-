@@ -10,9 +10,9 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Globe, LogOut } from "lucide-react";
 
-// ⭐ IMPORT CONTEXT — المهم
 import { PomodoroSettingsProvider } from "@/contexts/PomodoroSettingsContext";
 
+// ⭐ الصفحات
 import NotFound from "@/pages/not-found";
 import SignIn from "@/pages/sign-in";
 import SignUp from "@/pages/sign-up";
@@ -26,6 +26,9 @@ import Achievements from "@/pages/achievements";
 import Motivation from "@/pages/motivation";
 import About from "@/pages/about";
 import Settings from "@/pages/settings";
+
+// ⭐ الصفحة الجديدة — Gym
+import GymPage from "@/pages/gym";   // ← لو اسم الملف مختلف قولّي
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -68,9 +71,12 @@ function AuthenticatedLayout() {
     <div className="flex flex-col h-screen w-full bg-background">
       <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shadow-sm">
         <div className="flex items-center gap-3">
+
+          {/* هضيف هنا اللوجو بعد ما تبعت Navbar */}
           <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             نماء | Namaa
           </h1>
+
           {user && (
             <p className="text-sm text-muted-foreground hidden sm:block">
               {dir === "rtl"
@@ -84,9 +90,11 @@ function AuthenticatedLayout() {
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
+
           <Button variant="ghost" size="icon" onClick={toggleLanguage}>
             <Globe className="h-5 w-5" />
           </Button>
+
           <Button variant="ghost" size="icon" onClick={signOut} className="hidden sm:flex">
             <LogOut className="h-5 w-5" />
           </Button>
@@ -105,6 +113,10 @@ function AuthenticatedLayout() {
           <Route path="/motivation" component={() => <ProtectedRoute component={Motivation} />} />
           <Route path="/about" component={() => <ProtectedRoute component={About} />} />
           <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
+
+          {/* ⭐ صفحة الجيم الجديدة */}
+          <Route path="/gym" component={() => <ProtectedRoute component={GymPage} />} />
+
           <Route component={NotFound} />
         </Switch>
       </main>
@@ -130,17 +142,12 @@ export default function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
-
-            {/* ⭐ ضفنا الـ Pomodoro Settings Provider هنا */}
             <PomodoroSettingsProvider>
-
               <TooltipProvider>
                 <Toaster />
                 <Router />
               </TooltipProvider>
-
             </PomodoroSettingsProvider>
-
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

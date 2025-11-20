@@ -11,6 +11,7 @@ import {
   Lightbulb,
   Info,
   Settings,
+  Dumbbell,
 } from "lucide-react";
 
 export function BottomNav() {
@@ -26,6 +27,10 @@ export function BottomNav() {
     { title: t("statistics"), url: "/statistics", icon: BarChart3, testId: "nav-statistics" },
     { title: t("achievements"), url: "/achievements", icon: Trophy, testId: "nav-achievements" },
     { title: t("motivation"), url: "/motivation", icon: Lightbulb, testId: "nav-motivation" },
+
+    // ⭐ New Gym Page
+    { title: t("gym") || "Gym", url: "/gym", icon: Dumbbell, testId: "nav-gym" },
+
     { title: t("about"), url: "/about", icon: Info, testId: "nav-about" },
     { title: t("settings"), url: "/settings", icon: Settings, testId: "nav-settings" },
   ];
@@ -33,16 +38,10 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg">
       <div
-        className={`
-          flex items-center gap-4 px-3 py-2 no-scrollbar
-          ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}
-          overflow-x-auto
-          md:overflow-x-visible md:justify-between md:w-full
-        `}
-        style={{
-          direction: dir === "rtl" ? "rtl" : "ltr",
-          WebkitOverflowScrolling: "touch",
-        }}
+        className={`${
+          dir === "rtl" ? "flex-row-reverse" : "flex-row"
+        } flex items-center gap-4 px-3 py-2 no-scrollbar overflow-x-auto md:overflow-x-visible md:justify-between md:w-full`}
+        style={{ direction: dir === "rtl" ? "rtl" : "ltr", WebkitOverflowScrolling: "touch" }}
       >
         {navItems.map((item) => {
           const isActive = location === item.url;
@@ -51,16 +50,12 @@ export function BottomNav() {
               key={item.url}
               onClick={() => setLocation(item.url)}
               data-testid={item.testId}
-              className={`
-                flex flex-col items-center justify-center
-                min-w-[70px] px-2 py-1.5 rounded-lg transition-all hover-elevate
-                ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"}
-              `}
+              className={`flex flex-col items-center justify-center min-w-[70px] px-2 py-1.5 rounded-lg transition-all hover-elevate ${
+                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              }`}
             >
               <item.icon className={`h-5 w-5 mb-0.5 ${isActive ? "scale-110" : ""}`} />
-              <span className="text-[10px] font-medium text-center leading-tight">
-                {item.title}
-              </span>
+              <span className="text-[10px] font-medium text-center leading-tight">{item.title}</span>
             </button>
           );
         })}
