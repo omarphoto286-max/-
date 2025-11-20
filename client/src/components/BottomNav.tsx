@@ -28,7 +28,6 @@ export function BottomNav() {
     { title: t("statistics"), url: "/statistics", icon: BarChart3 },
     { title: t("achievements"), url: "/achievements", icon: Trophy },
     { title: t("motivation"), url: "/motivation", icon: Lightbulb },
-    { title: "التطوير", url: "/self-improvement", icon: Sparkles },
     { title: t("gym") || "Gym", url: "/gym", icon: Dumbbell },
     { title: t("about"), url: "/about", icon: Info },
     { title: t("settings"), url: "/settings", icon: Settings },
