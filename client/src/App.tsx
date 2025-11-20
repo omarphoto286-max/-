@@ -28,7 +28,7 @@ import About from "@/pages/about";
 import Settings from "@/pages/settings";
 
 // ⭐ الصفحة الجديدة — Gym
-import GymPage from "@/pages/gym";   // ← لو اسم الملف مختلف قولّي
+import GymPage from "@/pages/GymPage";   // ← لو اسم الملف مختلف قولّي
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
