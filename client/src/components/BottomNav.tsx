@@ -32,7 +32,7 @@ export function BottomNav() {
     // التطوير
     { title: "التطوير", url: "/self-improvement", icon: Sparkles },
 
-    // Gym
+    // الجيم
     { title: t("gym") || "Gym", url: "/gym", icon: Dumbbell },
 
     { title: t("about"), url: "/about", icon: Info },
@@ -40,17 +40,24 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg">
+    <nav
+      className="
+        fixed bottom-0 left-0 right-0 z-50
+        bg-card border-t border-border shadow-lg
+        w-full
+        md:px-10
+      "
+      style={{ direction: dir }}
+    >
       <div
         className={`
-          flex items-center gap-4 px-4 py-2
-          overflow-x-auto no-scrollbar w-full
+          flex items-center gap-6 px-4 py-3
+          overflow-x-auto no-scrollbar
+          w-full
+          justify-start
+          md:justify-center
           ${dir === "rtl" ? "flex-row-reverse" : "flex-row"}
         `}
-        style={{
-          direction: dir === "rtl" ? "rtl" : "ltr",
-          WebkitOverflowScrolling: "touch",
-        }}
       >
         {navItems.map((item) => {
           const isActive = location === item.url;
@@ -61,19 +68,30 @@ export function BottomNav() {
               onClick={() => setLocation(item.url)}
               className={`
                 flex flex-col items-center justify-center
-                min-w-[70px] flex-shrink-0
-                py-1.5 px-2
-                rounded-lg transition-all
-                ${isActive ? "text-primary scale-110" : "text-muted-foreground"}
+                min-w-[70px]
+                transition-all duration-300
+                rounded-xl relative
+                px-2 py-1.5
+                ${
+                  isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-primary"
+                }
               `}
             >
               <item.icon
                 className={`
                   h-6 w-6 mb-1 transition-all
-                  ${isActive ? "scale-110" : ""}
+                  ${isActive ? "scale-110" : "opacity-80"}
                 `}
               />
-              <span className="text-[11px] font-medium text-center leading-tight">
+
+              <span
+                className={`
+                  text-[11px] font-medium
+                  ${isActive ? "opacity-100" : "opacity-70"}
+                `}
+              >
                 {item.title}
               </span>
             </button>
