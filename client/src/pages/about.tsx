@@ -14,7 +14,7 @@ export default function About() {
         <Card className="shadow-xl bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
           <CardHeader>
             <CardTitle className="text-3xl text-center">
-              {language === "ar" ? "بركة" : "Baraka"}
+              {language === "ar" ? "نماء" : "Namaa"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 text-center">
@@ -125,25 +125,41 @@ export default function About() {
             </div>
 
             <div className="flex flex-wrap justify-center gap-3">
+              {/* Email — يعمل بشكل صحيح */}
               <Button variant="outline" size="lg" asChild>
                 <a href="mailto:omar.basuoney@example.com" data-testid="link-email">
                   <Mail className="h-5 w-5 mr-2" />
                   {language === "ar" ? "البريد الإلكتروني" : "Email"}
                 </a>
               </Button>
+
+              {/* GitHub */}
               <Button variant="outline" size="lg" asChild>
-                <a href="https://github.com/omarbasuoney" target="_blank" rel="noopener noreferrer" data-testid="link-github">
+                <a
+                  href="https://github.com/omarphoto286-max"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="link-github"
+                >
                   <Github className="h-5 w-5 mr-2" />
                   GitHub
                 </a>
               </Button>
+
+              {/* Instagram بدل LinkedIn */}
               <Button variant="outline" size="lg" asChild>
-                <a href="https://linkedin.com/in/omarbasuoney" target="_blank" rel="noopener noreferrer" data-testid="link-linkedin">
-                  <Linkedin className="h-5 w-5 mr-2" />
-                  LinkedIn
+                <a
+                  href="https://www.instagram.com/omar_basuoney4?igsh=enIwOTA0ZTU0c3hz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="link-instagram"
+                >
+                  <Globe className="h-5 w-5 mr-2" />
+                  Instagram
                 </a>
               </Button>
             </div>
+
 
             <p className="text-center text-muted-foreground text-sm">
               {language === "ar"
