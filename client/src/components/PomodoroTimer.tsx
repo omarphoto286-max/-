@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Play, Pause, RotateCcw, FastForward } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePomodoroSettings } from "@/contexts/PomodoroSettingsContext";
-import { useAuth } from "@/contexts/AuthContext"; // NEW → for per-user storage
+import { useAuth } from "@/contexts/AuthContext";
 
 export function PomodoroTimer() {
   const { t } = useLanguage();
@@ -21,14 +21,18 @@ export function PomodoroTimer() {
   const [isBreak, setIsBreak] = useState(false);
   const [sessions, setSessions] = useState(0);
 
-  const [animate, setAnimate] = useState(false); // NEW Animation
+  const [animate, setAnimate] = useState(false);
 
-  // Load sound effect
+  // -------------------------------
+  // Load sound
+  // -------------------------------
   useEffect(() => {
-    audioRef.current = new Audio("/sounds/finish.mp3"); // ضع الصوت في public/sounds
+    audioRef.current = new Audio("/sounds/finish.mp3");
   }, []);
 
-  // Load state with timestamps
+  // -------------------------------
+  // Load saved timer state
+  // -------------------------------
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
     if (!saved) {
@@ -36,37 +40,78 @@ export function PomodoroTimer() {
       return;
     }
 
-    const { startTime, duration, isBreak: savedBreak, isRunning: savedRunning, sessions: savedSessions } =
-      JSON.parse(saved);
+    const {
+      startTime,
+      duration,
+      isBreak: savedBreak,
+      isRunning: savedRunning,
+      sessions: savedSessions,
+    } = JSON.parse(saved);
 
+    setSessions(savedSessions || 0);
+    setIsBreak(savedBreak);
+
+    // -------------------------------
+    // إذا المؤقت كان واقف → رجّع نفس القيم بدون تشغيل
+    // -------------------------------
+    if (!savedRunning || !startTime) {
+      setTimeLeft(duration);
+      setIsRunning(false);
+      return;
+    }
+
+    // -------------------------------
+    // لو المؤقت كان شغّال نحسب المتبقي
+    // -------------------------------
     const now = Date.now();
     const elapsed = Math.floor((now - startTime) / 1000);
 
     if (elapsed >= duration) {
-      // Timer ended while away
+      // The timer ended while user was away
       audioRef.current?.play();
 
-      setIsBreak(!savedBreak);
-      const newDuration = savedBreak
-        ? settings.workDuration * 60
-        : settings.shortBreak * 60;
+      const newSession = savedSessions;
+      const finishedBreak = savedBreak;
 
-      setTimeLeft(newDuration);
-      setIsRunning(false);
+      if (!finishedBreak) {
+        const updatedSessions = newSession + 1;
+        setSessions(updatedSessions);
+
+        const longBreak =
+          updatedSessions % settings.cyclesBeforeLongBreak === 0;
+
+        const breakDuration = longBreak
+          ? settings.longBreak * 60
+          : settings.shortBreak * 60;
+
+        setIsBreak(true);
+        setTimeLeft(breakDuration);
+        setIsRunning(false);
+      } else {
+        const workDuration = settings.workDuration * 60;
+        setIsBreak(false);
+        setTimeLeft(workDuration);
+        setIsRunning(false);
+      }
     } else {
+      // Timer still running normally
       setTimeLeft(duration - elapsed);
-      setIsBreak(savedBreak);
-      setIsRunning(savedRunning);
+      setIsRunning(true);
     }
-
-    setSessions(savedSessions || 0);
   }, [user]);
 
-  const saveState = (duration: number, running = isRunning, breakMode = isBreak) => {
+  // -------------------------------
+  // Save state (fixed version)
+  // -------------------------------
+  const saveState = (
+    duration: number,
+    running = isRunning,
+    breakMode = isBreak
+  ) => {
     localStorage.setItem(
       storageKey,
       JSON.stringify({
-        startTime: Date.now(),
+        startTime: running ? Date.now() : null, // أهم تعديل
         duration,
         isRunning: running,
         isBreak: breakMode,
@@ -75,26 +120,29 @@ export function PomodoroTimer() {
     );
   };
 
+  // -------------------------------
+  // Timer countdown
+  // -------------------------------
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
-          const n = prev - 1;
-          saveState(prev);
-          return n;
+          saveState(prev); // نحفظ فقط لو شغال
+          return prev - 1;
         });
       }, 1000);
     }
 
     if (timeLeft === 0 && isRunning) {
       clearInterval(intervalRef.current!);
-      audioRef.current?.play(); // NEW sound
+      audioRef.current?.play();
 
       if (!isBreak) {
         const newSession = sessions + 1;
         setSessions(newSession);
 
-        const longBreak = newSession % settings.cyclesBeforeLongBreak === 0;
+        const longBreak =
+          newSession % settings.cyclesBeforeLongBreak === 0;
 
         const breakDuration = longBreak
           ? settings.longBreak * 60
@@ -116,6 +164,9 @@ export function PomodoroTimer() {
     return () => clearInterval(intervalRef.current!);
   }, [isRunning, timeLeft]);
 
+  // -------------------------------
+  // Controls
+  // -------------------------------
   const toggleTimer = () => {
     if (!isRunning) {
       setAnimate(true);
@@ -135,6 +186,7 @@ export function PomodoroTimer() {
 
   const skipBreak = () => {
     if (!isBreak) return;
+
     const newDuration = settings.workDuration * 60;
     setIsRunning(false);
     setIsBreak(false);
@@ -142,6 +194,9 @@ export function PomodoroTimer() {
     saveState(newDuration, false, false);
   };
 
+  // -------------------------------
+  // UI values
+  // -------------------------------
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
@@ -158,9 +213,20 @@ export function PomodoroTimer() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className={`relative flex items-center justify-center transition-all duration-500 ${animate ? "scale-110" : ""}`}>
+        <div
+          className={`relative flex items-center justify-center transition-all duration-500 ${
+            animate ? "scale-110" : ""
+          }`}
+        >
           <svg className="w-64 h-64 transform -rotate-90">
-            <circle cx="128" cy="128" r="120" stroke="hsl(var(--muted))" strokeWidth="8" fill="none" />
+            <circle
+              cx="128"
+              cy="128"
+              r="120"
+              stroke="hsl(var(--muted))"
+              strokeWidth="8"
+              fill="none"
+            />
             <circle
               cx="128"
               cy="128"
@@ -169,7 +235,9 @@ export function PomodoroTimer() {
               strokeWidth="8"
               fill="none"
               strokeDasharray={`${2 * Math.PI * 120}`}
-              strokeDashoffset={`${2 * Math.PI * 120 * (1 - progress / 100)}`}
+              strokeDashoffset={`${
+                2 * Math.PI * 120 * (1 - progress / 100)
+              }`}
               strokeLinecap="round"
               className="transition-all duration-300"
             />
@@ -177,7 +245,8 @@ export function PomodoroTimer() {
 
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="text-6xl font-bold tabular-nums">
-              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+              {String(minutes).padStart(2, "0")}:
+              {String(seconds).padStart(2, "0")}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
               {isBreak ? t("break") : t("focus")}
@@ -186,16 +255,31 @@ export function PomodoroTimer() {
         </div>
 
         <div className="flex justify-center gap-3">
-          <Button variant="default" size="icon" onClick={toggleTimer} className="h-12 w-12">
+          <Button
+            variant="default"
+            size="icon"
+            onClick={toggleTimer}
+            className="h-12 w-12"
+          >
             {isRunning ? <Pause /> : <Play />}
           </Button>
 
-          <Button variant="outline" size="icon" onClick={resetTimer} className="h-12 w-12">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={resetTimer}
+            className="h-12 w-12"
+          >
             <RotateCcw />
           </Button>
 
           {isBreak && (
-            <Button variant="secondary" size="icon" onClick={skipBreak} className="h-12 w-12">
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={skipBreak}
+              className="h-12 w-12"
+            >
               <FastForward />
             </Button>
           )}
