@@ -29,7 +29,6 @@ import Settings from "@/pages/settings";
 
 // ⭐ الصفحة الجديدة — Gym
 import GymPage from "@/pages/GymPage";   // ← لو اسم الملف مختلف قولّي
-import SelfImprovementPage from "./pages/SelfImprovementPage";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -117,7 +116,6 @@ function AuthenticatedLayout() {
 
           {/* ⭐ صفحة الجيم الجديدة */}
           <Route path="/gym" component={() => <ProtectedRoute component={GymPage} />} />
-	  <Route path="/self-improvement" component={SelfImprovementPage} />
           <Route component={NotFound} />
         </Switch>
       </main>
