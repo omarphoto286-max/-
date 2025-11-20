@@ -1,94 +1,145 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play, Pause, RotateCcw, FastForward } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePomodoroSettings } from "@/contexts/PomodoroSettingsContext";
+import { useAuth } from "@/contexts/AuthContext"; // NEW → for per-user storage
 
 export function PomodoroTimer() {
   const { t } = useLanguage();
   const { settings } = usePomodoroSettings();
+  const { user } = useAuth();
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // استخدم workDuration بدل settings.focus
-  const [timeLeft, setTimeLeft] = useState(settings.workDuration * 60);
+  const storageKey = `pomodoro_state_${user?.id || "guest"}`;
+
+  const [timeLeft, setTimeLeft] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [sessions, setSessions] = useState(0);
 
-  // Load saved state
-  useEffect(() => {
-    const saved = localStorage.getItem("pomodoro");
-    if (saved) {
-      const data = JSON.parse(saved);
+  const [animate, setAnimate] = useState(false); // NEW Animation
 
-      setTimeLeft(Number(data.timeLeft) || settings.workDuration * 60);
-      setIsRunning(Boolean(data.isRunning));
-      setIsBreak(Boolean(data.isBreak));
-      setSessions(Number(data.sessions) || 0);
-    }
+  // Load sound effect
+  useEffect(() => {
+    audioRef.current = new Audio("/sounds/finish.mp3"); // ضع الصوت في public/sounds
   }, []);
 
-  // Save state
+  // Load state with timestamps
   useEffect(() => {
-    localStorage.setItem(
-      "pomodoro",
-      JSON.stringify({ timeLeft, isRunning, isBreak, sessions })
-    );
-  }, [timeLeft, isRunning, isBreak, sessions]);
-
-  // When settings change → reset timer
-  useEffect(() => {
-    if (!isRunning) {
-      setTimeLeft(
-        (isBreak ? settings.shortBreak : settings.workDuration) * 60
-      );
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) {
+      setTimeLeft(settings.workDuration * 60);
+      return;
     }
-  }, [settings]);
 
-  // Timer logic
+    const { startTime, duration, isBreak: savedBreak, isRunning: savedRunning, sessions: savedSessions } =
+      JSON.parse(saved);
+
+    const now = Date.now();
+    const elapsed = Math.floor((now - startTime) / 1000);
+
+    if (elapsed >= duration) {
+      // Timer ended while away
+      audioRef.current?.play();
+
+      setIsBreak(!savedBreak);
+      const newDuration = savedBreak
+        ? settings.workDuration * 60
+        : settings.shortBreak * 60;
+
+      setTimeLeft(newDuration);
+      setIsRunning(false);
+    } else {
+      setTimeLeft(duration - elapsed);
+      setIsBreak(savedBreak);
+      setIsRunning(savedRunning);
+    }
+
+    setSessions(savedSessions || 0);
+  }, [user]);
+
+  const saveState = (duration: number, running = isRunning, breakMode = isBreak) => {
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        startTime: Date.now(),
+        duration,
+        isRunning: running,
+        isBreak: breakMode,
+        sessions,
+      })
+    );
+  };
+
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
-      intervalRef.current = setInterval(
-        () => setTimeLeft((prev) => prev - 1),
-        1000
-      );
-    } else if (timeLeft === 0) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          const n = prev - 1;
+          saveState(prev);
+          return n;
+        });
+      }, 1000);
+    }
+
+    if (timeLeft === 0 && isRunning) {
+      clearInterval(intervalRef.current!);
+      audioRef.current?.play(); // NEW sound
 
       if (!isBreak) {
-        // Focus session finished
         const newSession = sessions + 1;
         setSessions(newSession);
 
-        const longBreakNow =
-          newSession % settings.cyclesBeforeLongBreak === 0;
+        const longBreak = newSession % settings.cyclesBeforeLongBreak === 0;
+
+        const breakDuration = longBreak
+          ? settings.longBreak * 60
+          : settings.shortBreak * 60;
 
         setIsBreak(true);
-        setTimeLeft(
-          (longBreakNow ? settings.longBreak : settings.shortBreak) * 60
-        );
+        setTimeLeft(breakDuration);
+        saveState(breakDuration, false, true);
       } else {
-        // Break finished
+        const workDuration = settings.workDuration * 60;
         setIsBreak(false);
-        setTimeLeft(settings.workDuration * 60);
+        setTimeLeft(workDuration);
+        saveState(workDuration, false, false);
       }
 
       setIsRunning(false);
     }
 
-    return () => intervalRef.current && clearInterval(intervalRef.current);
-  }, [isRunning, timeLeft, isBreak, sessions, settings]);
+    return () => clearInterval(intervalRef.current!);
+  }, [isRunning, timeLeft]);
 
   const toggleTimer = () => {
+    if (!isRunning) {
+      setAnimate(true);
+      setTimeout(() => setAnimate(false), 500);
+      saveState(timeLeft, true, isBreak);
+    }
     setIsRunning(!isRunning);
   };
 
   const resetTimer = () => {
+    const newDuration = settings.workDuration * 60;
     setIsRunning(false);
     setIsBreak(false);
-    setTimeLeft(settings.workDuration * 60);
+    setTimeLeft(newDuration);
+    saveState(newDuration, false, false);
+  };
+
+  const skipBreak = () => {
+    if (!isBreak) return;
+    const newDuration = settings.workDuration * 60;
+    setIsRunning(false);
+    setIsBreak(false);
+    setTimeLeft(newDuration);
+    saveState(newDuration, false, false);
   };
 
   const minutes = Math.floor(timeLeft / 60);
@@ -107,16 +158,9 @@ export function PomodoroTimer() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="relative flex items-center justify-center">
+        <div className={`relative flex items-center justify-center transition-all duration-500 ${animate ? "scale-110" : ""}`}>
           <svg className="w-64 h-64 transform -rotate-90">
-            <circle
-              cx="128"
-              cy="128"
-              r="120"
-              stroke="hsl(var(--muted))"
-              strokeWidth="8"
-              fill="none"
-            />
+            <circle cx="128" cy="128" r="120" stroke="hsl(var(--muted))" strokeWidth="8" fill="none" />
             <circle
               cx="128"
               cy="128"
@@ -133,10 +177,8 @@ export function PomodoroTimer() {
 
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="text-6xl font-bold tabular-nums">
-              {String(minutes).padStart(2, "0")}:
-              {String(seconds).padStart(2, "0")}
+              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
             </div>
-
             <p className="text-sm text-muted-foreground mt-2">
               {isBreak ? t("break") : t("focus")}
             </p>
@@ -151,11 +193,19 @@ export function PomodoroTimer() {
           <Button variant="outline" size="icon" onClick={resetTimer} className="h-12 w-12">
             <RotateCcw />
           </Button>
+
+          {isBreak && (
+            <Button variant="secondary" size="icon" onClick={skipBreak} className="h-12 w-12">
+              <FastForward />
+            </Button>
+          )}
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
           {t("sessions")}: <span className="font-semibold">{sessions}</span>
         </p>
+
+        <audio ref={audioRef} />
       </CardContent>
     </Card>
   );
