@@ -132,7 +132,6 @@ export default function GymPage() {
           <h1 className="text-3xl font-bold">Gym Tracker</h1>
           <p className="text-muted-foreground">Track workouts, view progress, and keep motivated.</p>
         </div>
-        <img src="/mnt/data/d309903b-a91c-4f6d-aa12-eb20de60eaa9.png" alt="hero" className="w-32 h-20 object-contain rounded-md shadow" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
